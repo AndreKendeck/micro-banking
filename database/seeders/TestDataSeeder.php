@@ -3,14 +3,12 @@
 namespace Database\Seeders;
 
 use App\Enums\AccountType;
-use App\Enums\TransactionType;
 use App\Models\Account;
-use App\Models\Transaction;
 use App\Models\User;
 use Carbon\Carbon;
-use Database\Factories\AccountFactory;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use Cknow\Money\Money;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\Log;
 
 class TestDataSeeder extends Seeder
 {
@@ -26,60 +24,45 @@ class TestDataSeeder extends Seeder
             'email' => env('DEFAULT_USER_EMAIl', 'admin@mail.test')
         ]);
 
-        Account::factory(rand(2, 5))->create([
-            'user_id' => $admin->id,
-            'created_at' => fake()->dateTimeBetween('-6 months')
-        ]);
+        Account::factory()->count(rand(2, 5))->for($admin)->create();
+        $users = User::factory(5)->create();
 
-        User::factory(5)->create()->each(function (User $user) {
-            Account::factory(rand(2, 5))->create([
-                'user_id' => $user,
-                'created_at' => now()->subMonths(7)
-            ])->each(function (Account $account) {
-                // lets give each account a good sum of money to work with from the start
+        $users->each(function (User $user) {
+            Account::factory()->count(rand(2, 5))->for($user)->create();
+        });
 
-                $account->credit(
-                    fake()->randomFloat(0, 10000, 50000),
-                    "Starting Balance",
-                    now()->subMonths(6)
-                );
+        foreach ($users as $user) {
+            $user->accounts->each(function (Account $account) {
+                // initial account credit
+                $initialAmount = new Money(rand(10000, 50000), forceDecimals: true);
+
+                $account->credit($initialAmount, "Initial Account Credit", now()->subMonths(8));
+
                 for ($i = 0; $i < rand(30, 50); $i++) {
-                    $account = $account->refresh();
-                    $occurence = new Carbon(fake()->dateTimeBetween('-6 months'));
                     $shouldDebit = fake()->boolean(75);
+                    $occurence = new Carbon(fake()->dateTimeBetween('-6 months'));
+                    $ob = $account->refresh()->getOpeningBalance($occurence);
                     if ($shouldDebit) {
+                        /**
+                         * Lets have large amounts for debits as well 
+                         */
+                        $amount = new Money(rand(1, (int) $ob->absolute()->multiply(0.6)->formatByDecimal()), forceDecimals: true);
                         $account->debit(
-                            fake()->randomFloat(1, $this->getMaxAmount($account, TransactionType::DEBIT, $occurence)),
-                            "Debit on Account on: {$occurence->toDateTimeString()}",
+                            $amount,
+                            "Debit on account of {$amount->formatByCurrencySymbol()} on {$occurence->toDateTimeString()}",
                             $occurence
                         );
                     } else {
+                        $amount = $ob->isNegative() ? $ob->absolute()->multiply(0.8) : $ob->multiply(0.8);
+                        $amount = new Money($amount->formatByDecimal(), forceDecimals: true);
                         $account->credit(
-                            fake()->randomFloat(1, $this->getMaxAmount($account, TransactionType::CREDIT, $occurence)),
-                            "Credit on Account on: {$occurence->toDateTimeString()}",
+                            $amount,
+                            "Credit on account of {$amount->formatByCurrencySymbol()} on {$occurence->toDateTimeString()}",
                             $occurence
                         );
                     }
                 }
             });
-        });
-    }
-
-    /**
-     * @return float
-     */
-    private function getMaxAmount(Account $account, TransactionType $transactionType, Carbon $occurence): float
-    {
-        switch ($transactionType) {
-            case TransactionType::DEBIT:
-                if ($account->isCredit()) {
-                    return fake()->randomFloat(0, 10000, 50000);
-                }
-                return ((float) $account->getOpeningBalance($occurence)->getAmount() / 100);
-            case TransactionType::CREDIT:
-                return (
-                    ($account->getOpeningBalance($occurence)->getAmount() * 0.8) / 100
-                );
         }
     }
 }

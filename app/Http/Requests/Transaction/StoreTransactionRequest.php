@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Transaction;
 
+use App\Enums\TransactionType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreTransactionRequest extends FormRequest
 {
@@ -11,7 +13,7 @@ class StoreTransactionRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return auth()->check();
     }
 
     /**
@@ -22,7 +24,12 @@ class StoreTransactionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'type' => [
+                'required',
+                Rule::in(array_map(fn (TransactionType $type) => $type->value, TransactionType::cases()))
+            ],
+            'amount' => ['numeric', 'min:0'],
+            'account_number' => ['min:9', 'max:9', 'string', 'required', Rule::exists('accounts', 'number')->where('user_id', auth()->id())]
         ];
     }
 }

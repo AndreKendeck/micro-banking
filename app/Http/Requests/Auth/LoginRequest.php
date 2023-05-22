@@ -1,19 +1,17 @@
 <?php
 
-namespace App\Http\Requests\Account;
+namespace App\Http\Requests\Auth;
 
-use App\Enums\AccountType;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateAccountRequest extends FormRequest
+class LoginRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
      */
     public function authorize(): bool
     {
-        return auth()->check();
+        return auth()->guest();
     }
 
     /**
@@ -24,10 +22,18 @@ class UpdateAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['sometimes', 'string', 'min:3', 'max:100'],
-            'type' => ['sometimes', 'required', Rule::in(
-                array_map(fn (AccountType $type) => $type->value, AccountType::cases())
-            )]
+            'email' => ['required', 'email', 'exists:users,email'],
+            'password' => ['required', 'string']
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function messages()
+    {
+        return [
+            'email.exists' => "Invalid credidentials"
         ];
     }
 }

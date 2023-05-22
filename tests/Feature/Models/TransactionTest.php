@@ -5,8 +5,6 @@ namespace Tests\Feature\Models;
 use App\Enums\TransactionType;
 use App\Models\Account;
 use App\Models\Transaction;
-use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
 class TransactionTest extends TestCase
@@ -25,13 +23,13 @@ class TransactionTest extends TestCase
     public function debits_are_negative()
     {
         $transaction = Transaction::factory()->create(['type' => TransactionType::DEBIT->value]);
-        $this->assertTrue($transaction->amount->isNegative());
+        $this->assertTrue($transaction->refresh()->amount->isNegative(), "The value of the debit is {$transaction->amount->isPositive()}");
     }
 
     /** @test */
     public function credits_are_positive()
     {
         $transaction = Transaction::factory()->create(['type' => TransactionType::CREDIT->value]);
-        $this->assertTrue($transaction->amount->isPositive());
+        $this->assertTrue($transaction->refresh()->amount->isPositive());
     }
 }

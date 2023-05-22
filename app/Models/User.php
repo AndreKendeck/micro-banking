@@ -16,6 +16,7 @@ use Illuminate\Support\Collection;
  * @property string name
  * @property string email
  * @property Collection accounts
+ * @method static Builder byEmail()
  */
 class User extends Authenticatable
 {
@@ -45,6 +46,7 @@ class User extends Authenticatable
      * @var array<string, string>
      */
     protected $casts = [
+        'id' => 'integer',
         'password' => 'hashed',
         'name' => 'string',
         'email' => 'string',

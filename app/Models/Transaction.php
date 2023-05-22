@@ -8,6 +8,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Cknow\Money\Money as CMoney;
+use Illuminate\Database\Eloquent\Casts\Attribute;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Cache;
 
 /**
  * @property string id
@@ -31,6 +34,14 @@ class Transaction extends Model
      * @var array
      */
     protected $guarded = [];
+
+
+    /**
+     * @var array
+     */
+    protected $appends = [
+        'running_balance'
+    ];
 
 
     /**
@@ -67,5 +78,32 @@ class Transaction extends Model
     public function account(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(Account::class);
+    }
+    
+    /**
+     * @param integer $limit
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function olderTransactions(int $limit = 50): \Illuminate\Database\Eloquent\Builder
+    {
+        return self::where('account_id', $this->account_id)->where('created_at', '<', $this->created_at)->limit($limit);
+    }
+
+    /**
+     * @return Attribute
+     */
+    protected function runningBalance(): Attribute
+    {
+        return new Attribute(
+            get: fn () => money_sum($this->amount, ...$this->olderTransactions()->get()->pluck('amount'))
+        );
+    }
+
+    /**
+     * @return boolean
+     */
+    public function isVoid(): bool
+    {
+        return !is_null($this->voided_at);
     }
 }

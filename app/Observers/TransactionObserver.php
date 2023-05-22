@@ -3,15 +3,22 @@
 namespace App\Observers;
 
 use App\Models\Transaction;
+use Illuminate\Support\Facades\Cache;
 
 class TransactionObserver
 {
+    /**
+     * Handle events after all transactions are committed.
+     *
+     * @var bool
+     */
+    public $afterCommit = true;
+
     /**
      * Handle the Transaction "created" event.
      */
     public function created(Transaction $transaction): void
     {
-        //
     }
 
     /**

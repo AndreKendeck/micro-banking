@@ -3,15 +3,17 @@
 namespace Database\Factories;
 
 use App\Enums\AccountType;
+use App\Models\Account;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Factories\Factory;
-use \Illuminate\Support\Str;
+
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\Account>
  */
 class AccountFactory extends Factory
 {
+    protected $model = Account::class;
     /**
      * Define the model's default state.
      *
@@ -23,7 +25,7 @@ class AccountFactory extends Factory
         return [
             'type' => $accountType,
             'name' => sprintf("%s %s Account",  fake()->colorName(), $accountType),
-            'user_id' => User::factory()->create()->id,
+            'user_id' => User::factory(),
         ];
     }
 }

@@ -4,7 +4,6 @@ namespace Tests\Feature\Models;
 
 use App\Enums\AccountType;
 use App\Enums\TransactionType;
-use App\Exceptions\InsufficientFundsException;
 use App\Models\Account;
 use App\Models\Transaction;
 use App\Models\User;
@@ -28,6 +27,14 @@ class AccountTest extends TestCase
         ]);
         $this->assertTrue($account->isNew());
         $this->assertEquals($account->opening_balance, money(0));
+    }
+
+
+    /** @test */
+    public function an_account_is_alway_created_with_9_digits()
+    {
+        $account = Account::factory()->create();
+        $this->assertTrue(strlen($account->number) === 9);
     }
 
 
@@ -82,7 +89,7 @@ class AccountTest extends TestCase
         $amountToCredit = rand(10, 1000);
         $this->travel(5)->minutes(function () use ($account, $amountToCredit) {
             /** @var Transaction $transaction */
-            $transaction = $account->credit($amountToCredit, "Random Credit to Account");
+            $transaction = $account->credit(money($amountToCredit, forceDecimals: true), "Random Credit to Account");
             $this->assertInstanceOf(Transaction::class, $transaction);
             $this->assertDatabaseHas('transactions', $transaction->getAttributes());
             $this->assertEquals(
@@ -99,10 +106,10 @@ class AccountTest extends TestCase
         $account = Account::factory()->create();
         $closingBalance = rand(10, 1000);
         /** @var Transaction $transaction */
-        $account->credit($closingBalance, "Random Credit to Account");
+        $account->credit(money($closingBalance, forceDecimals: true), "Random Credit to Account");
         $this->travel(5)->minutes(function () use ($closingBalance, $account) {
             $debitToAccount = rand(1, floor($closingBalance * 0.8));
-            $transaction = $account->debit($debitToAccount, "Random Charge to account");
+            $transaction = $account->debit(money($debitToAccount, forceDecimals: true), "Random Charge to account");
             $this->assertInstanceOf(Transaction::class, $transaction);
             $this->assertDatabaseHas('transactions', $transaction->getAttributes());
         });
@@ -110,13 +117,16 @@ class AccountTest extends TestCase
 
 
     /** @test */
-    public function an_account_cannot_be_debitted_into_a_negavtive()
+    public function an_cheq_or_savings_account_cannot_be_debitted_into_a_negavtive()
     {
+        /** @var Account */
         $account = Account::factory()->create([
             'type' => fake()->randomElement([AccountType::SAVINGS->value, AccountType::CHEQ->value])
         ]);
-        $this->expectException(InsufficientFundsException::class);
-        $account->debit(rand(10, 1000), "Random");
+        $transaction = $account->debit(money(rand(10, 1000), forceDecimals: true), "Random");
+        $this->assertSoftDeleted('transactions', $transaction->getAttributes(), deletedAtColumn: 'voided_at');
+        $this->assertTrue($transaction->isVoid());
+        $this->assertEquals($account->refresh()->closing_balance->formatByDecimal(), '0.00');
     }
 
 
@@ -126,7 +136,7 @@ class AccountTest extends TestCase
         $account = Account::factory()->create([
             'type' => AccountType::CREDIT->value
         ]);
-        $transaction = $account->debit(rand(10, 1000), "Interest");
+        $transaction = $account->debit(money(rand(10, 1000), forceDecimals: true), "Interest");
         $this->assertDatabaseHas('transactions', $transaction->getAttributes());
         $this->assertTrue($account->closing_balance->isNegative());
     }
@@ -136,7 +146,7 @@ class AccountTest extends TestCase
     public function voided_transactions_are_not_included_in_the_balance_calculation()
     {
         $account = Account::factory()->create();
-        $transaction = $account->credit(700.90, "False Money");
+        $transaction = $account->credit(money(700.90, forceDecimals: true), "False Money");
         $transaction->void();
         $transaction = $transaction->refresh();
         $this->assertSoftDeleted('transactions', $transaction->getAttributes(), deletedAtColumn: 'voided_at');

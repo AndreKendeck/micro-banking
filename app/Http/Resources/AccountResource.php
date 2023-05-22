@@ -14,6 +14,12 @@ class AccountResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'type' => $this->type,
+            'isNew' => $this->isNew(),
+            'accountNumber' =>  $this->number,
+            'closingBalance' => $this->closing_balance->formatByCurrencySymbol() 
+        ];
     }
 }

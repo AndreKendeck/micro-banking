@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Cknow\Money\Money;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @property int string
@@ -27,6 +28,7 @@ use Illuminate\Support\Collection;
  * @property Money closing_balance
  * @method static Builder byType(AccountType $accountType)
  * @method static Builder byNumber(string $accountNumber)
+ * @method static Builder byUser(User $user)
  */
 class Account extends Model
 {
@@ -41,6 +43,7 @@ class Account extends Model
      * @var array
      */
     protected $casts = [
+        'id' => 'integer',
         'type' => 'string',
         'user_id' => 'integer',
         'number' => 'string',
@@ -130,6 +133,17 @@ class Account extends Model
         $query->where('number', $accountNumber);
     }
 
+
+    /**
+     * @param Builder $builder
+     * @param User $user
+     * @return void
+     */
+    public function scopeByUser(Builder $query, User $user): void
+    {
+        $query->where('user_id', $user->id);
+    }
+
     /**
      * @return \Illuminate\Database\Eloquent\Relations\BelongsTo
      */
@@ -143,7 +157,7 @@ class Account extends Model
      */
     public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Transaction::class);
+        return $this->hasMany(Transaction::class)->orderBy('created_at', 'ASC');
     }
 
     /**
@@ -160,43 +174,58 @@ class Account extends Model
      * @param Carbon|null $date
      * @return Transaction
      */
-    public function credit(int|float $amount, string $description, Carbon $date = null): Transaction
+    public function credit(Money $amount, string $description, Carbon $date = null): Transaction
     {
         return $this->transactions()->save(new Transaction([
             'type' => TransactionType::CREDIT->value,
-            'amount' => money($amount),
+            'amount' => $amount,
             'description' => $description,
-            'created_at' => $date ? $date : now()
+            'created_at' => $date ? $date : now(),
+            'updated_at' => $date ? $date : now()
         ]));
     }
 
     /**
-     * @param integer|float $amount
+     * @param Money $amount
      * @param string $description
-     * @param Carbon $date
+     * @param Carbon|null $date
+     * @throws InsufficientFundsException
      * @return Transaction
      */
-    public function debit(int|float $amount, string $description, Carbon $date = null): Transaction
+    public function debit(Money $amount, string $description, Carbon $date = null): Transaction
     {
-        if (!$this->isCredit() && $this->incomingAmountIsLargerThanClosingBalance($amount)) {
-            // throw new InsufficientFundsException();
+        try {
+            if (!$this->isCredit() && $this->incomingAmountIsLargerThanClosingBalance($amount)) {
+                throw new InsufficientFundsException();
+            }
+            return $this->transactions()->save(new Transaction([
+                'type' => TransactionType::DEBIT->value,
+                'amount' => $amount,
+                'description' => $description,
+                'created_at' => $date ? $date : now(),
+                'updated_at' => $date ? $date : now()
+            ]));
+        } catch (InsufficientFundsException $e) {
+            Log::critical("Could not debit amount of {$amount->formatByCurrencySymbol()} on account due to Insufficient Funds.");
+            return $this->transactions()->save(new Transaction([
+                'type' => TransactionType::DEBIT->value,
+                'amount' => $amount,
+                "description" => "Failed to debit amount {$amount->formatByCurrencySymbol()} on Account due to  Insufficient Funds.",
+                'voided_at' => now(),
+                'created_at' => $date ? $date : now(),
+                'updated_at' => $date ? $date : now()
+            ]));
         }
-        return $this->transactions()->save(new Transaction([
-            'type' => TransactionType::DEBIT->value,
-            'amount' => money($amount),
-            'description' => $description,
-            'created_at' => $date ? $date : now()
-        ]));
     }
 
     /**
-     * @param Carbon|null $date
+     * @param Carbon $date
      * @return Money
      */
-    public function getOpeningBalance(Carbon $date = null): Money
+    public function getOpeningBalance(Carbon $date): Money
     {
         return money_sum(
-            ...$this->transactions()->whereDate('created_at', '<=', $date->toDateString())->get()->pluck('amount')
+            ...$this->transactions()->where('created_at', '<=', $date)->get()->pluck('amount')
         );
     }
 
@@ -238,11 +267,11 @@ class Account extends Model
     }
 
     /**
-     * @param integer|float $amount
+     * @param Money $amount
      * @return boolean
      */
-    protected function incomingAmountIsLargerThanClosingBalance(int|float $amount): bool
+    protected function incomingAmountIsLargerThanClosingBalance(Money $amount): bool
     {
-        return (new Money($amount))->greaterThan($this->closing_balance);
+        return $amount->absolute()->greaterThan($this->closing_balance);
     }
 }

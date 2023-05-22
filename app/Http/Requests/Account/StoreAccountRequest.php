@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Account;
 
+use App\Enums\AccountType;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreAccountRequest extends FormRequest
 {
@@ -11,7 +13,7 @@ class StoreAccountRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return auth()->check();
     }
 
     /**
@@ -22,7 +24,20 @@ class StoreAccountRequest extends FormRequest
     public function rules(): array
     {
         return [
-            //
+            'name' => ['required', 'string', 'min:3', 'max:100'],
+            'type' => ['required', Rule::in(
+                array_map(fn (AccountType $type) => $type->value, AccountType::cases())
+            )]
+        ];
+    }
+
+    /**
+     * @return array
+     */
+    public function messages(): array
+    {
+        return [
+            'type.in' => 'The selected account type is invalid, please select one of CHEQ, SAVINGS or CREDIT account types.'
         ];
     }
 }

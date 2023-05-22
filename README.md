@@ -50,6 +50,11 @@ MAIL_ENCRYPTION=tls
 
 8. If you are on Macbook you can make use of Laravel Valet to access your the application alternatively you run `php artisan serve` to locally access your application 
 
+9. (Optionally) To run tests you can run `php artisan test`
+
+## Console Commands
+if you want to seed a specific account with transaction using you can do so using the console command
+`php artisan transactions:seed <account_number> --count=<number_of_transactions>`
 
 ## Development
 - [Naming Conventions / Standards ](https://xqsit.github.io/laravel-coding-guidelines/docs/naming-conventions/)

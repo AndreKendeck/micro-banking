@@ -3,47 +3,60 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Account\StoreAccountRequest;
+use App\Http\Resources\AccountResource;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use App\Models\Account;
 
 class AccountController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
-    public function index()
+    public function index(): JsonResponse
     {
-        //
+        return response()->json(AccountResource::collection(
+            Account::byUser(auth()->user())->get()
+        ));
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @param StoreAccountRequest $request
+     * @return JsonResponse
      */
-    public function store(Request $request)
+    public function store(StoreAccountRequest $request): JsonResponse
     {
-        //
+        return response()->json(
+            new AccountResource(Account::create(array_merge($request->validated(), ['user_id' => auth()->id()])))
+        );
     }
 
     /**
-     * Display the specified resource.
+     * @param string $accountNumber
+     * @return JsonResponse
      */
-    public function show(string $id)
+    public function show(string $accountNumber): JsonResponse
     {
-        //
+        $account = Account::byNumber($accountNumber)->firstOrFail();
+        if (auth()->user()->cannot('view', $account)) {
+            abort(404, "Account does not exist.");
+        }
+        return response()->json(new AccountResource($account));
     }
 
     /**
-     * Update the specified resource in storage.
+     * @param StoreAccountRequest $request
+     * @param string $accountNumber
+     * @return JsonResponse
      */
-    public function update(Request $request, string $id)
+    public function update(StoreAccountRequest $request, string $accountNumber): JsonResponse
     {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     */
-    public function destroy(string $id)
-    {
-        //
+        $account = Account::byNumber($accountNumber)->firstOrFail();
+        if (auth()->user()->cannot('update', $account)) {
+            abort(404, "Account does not exist.");
+        }
+        $account->update($request->validated());
+        return response()->json(new AccountResource($account));
     }
 }

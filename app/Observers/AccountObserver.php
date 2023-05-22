@@ -2,7 +2,6 @@
 
 namespace App\Observers;
 
-use App\Enums\TransactionType;
 use App\Models\Account;
 
 class AccountObserver
@@ -12,7 +11,11 @@ class AccountObserver
      */
     public function created(Account $account): void
     {
-        $account->credit(0, sprintf("Account Opened %s", now()->toDateTimeString()));
+        $account->credit(
+            money(0, forceDecimals: true),
+            sprintf("Account Opened %s", $account->created_at->toDateTimeString()),
+            $account->created_at
+        );
     }
 
     /**
