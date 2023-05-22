@@ -17,7 +17,7 @@ This Laravel Application is an approach on how to handle Banking Transactions wi
 
 ### Packages Used
 
- - [PHP Money](https://github.com/moneyphp/money): This package is **vital** makes it easier to manipulate Currencies in PHP, using floating point numbers or decimals will lead to inconsistencies, especially hanlding cents. `0.3 + 0.6 = 0.90000001` which can cause massive issues when working with large amounts
+ - [PHP Money](https://github.com/cknow/laravel-money): This package is **vital** makes it easier to manipulate Currencies in PHP, using floating point numbers or decimals will lead to inconsistencies, especially hanlding cents. `0.3 + 0.6 = 0.90000001` which can cause massive issues when working with large amounts
 
 ### Installation
 
@@ -49,3 +49,7 @@ MAIL_ENCRYPTION=tls
 7. You can also for local development create your own user using `php artisan user:create` and follow the prompts 
 
 8. If you are on Macbook you can make use of Laravel Valet to access your the application alternatively you run `php artisan serve` to locally access your application 
+
+
+## Development
+- [Naming Conventions / Standards ](https://xqsit.github.io/laravel-coding-guidelines/docs/naming-conventions/)
