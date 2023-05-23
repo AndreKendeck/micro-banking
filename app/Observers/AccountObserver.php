@@ -7,6 +7,13 @@ use App\Models\Account;
 class AccountObserver
 {
     /**
+     * Handle events after all transactions are committed.
+     *
+     * @var bool
+     */
+    public $afterCommit = true;
+
+    /**
      * Handle the Account "created" event.
      */
     public function created(Account $account): void

@@ -10,8 +10,8 @@
     <title>Microbanking Tool</title>
 </head>
 
-<body class="h-screen w-screen dark:bg-gray-800 bg-blue-100">
-    <div id="app"></div>
+<body class="h-screen w-screen dark:bg-gray-800 bg-gray-50">
+    <div id="app" ></div>
 </body>
 
 </html>

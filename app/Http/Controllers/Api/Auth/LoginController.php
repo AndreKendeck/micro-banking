@@ -19,7 +19,7 @@ class LoginController extends Controller
     public function login(LoginRequest $loginRequest): JsonResponse
     {
         $attempt = Auth::attempt($loginRequest->only(['email', 'password']));
-        if (!$attempt) return $this->loginFailedResponse("Authentication Failed.");
+        if (!$attempt) return $this->loginFailedResponse(__('auth.failed'));
         /** @var User */
         $user = User::byEmail($loginRequest->get('email'))->firstOrFail();
         return response()->json([
@@ -37,7 +37,7 @@ class LoginController extends Controller
     {
         return response()->json([
             'errors' => [
-                'email' => $message
+                'email' => [$message]
             ]
         ]);
     }

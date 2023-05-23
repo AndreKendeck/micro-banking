@@ -1,8 +1,22 @@
 <template>
     <div>
-        <router-view></router-view>
+        <Message />
+        <Navbar />
+        <div class="flex flex-col">
+            <router-view></router-view>
+        </div>
     </div>
 </template>
 <script>
-export default {};
+import Message from "./Message.vue";
+import Navbar from "./Navbar.vue";
+import { mapActions } from "vuex";
+export default {
+    methods: {
+        ...mapActions(["authCheck"]),
+    },
+    mounted() {
+        this.authCheck();
+    },
+};
 </script>

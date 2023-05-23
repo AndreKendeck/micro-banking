@@ -24,11 +24,17 @@ class TestDataSeeder extends Seeder
             'email' => env('DEFAULT_USER_EMAIl', 'admin@mail.test')
         ]);
 
-        Account::factory()->count(rand(2, 5))->for($admin)->create();
+        Account::factory()->count(rand(2, 5))->for($admin)->create([
+            'created_at' => now()->subMonths(8),
+            'updated_at' => now()->subMonths(8)
+        ]);
         $users = User::factory(5)->create();
 
         $users->each(function (User $user) {
-            Account::factory()->count(rand(2, 5))->for($user)->create();
+            Account::factory()->count(rand(2, 5))->for($user)->create([
+                'created_at' => now()->subMonths(8),
+                'updated_at' => now()->subMonths(8)
+            ]);
         });
 
         foreach ($users as $user) {
@@ -36,8 +42,8 @@ class TestDataSeeder extends Seeder
                 // initial account credit
                 $initialAmount = new Money(rand(10000, 50000), forceDecimals: true);
 
-                $account->credit($initialAmount, "Initial Account Credit", now()->subMonths(8));
-
+                $account->credit($initialAmount, "Initial Account Credit", now()->subMonths(7));
+                
                 for ($i = 0; $i < rand(30, 50); $i++) {
                     $shouldDebit = fake()->boolean(75);
                     $occurence = new Carbon(fake()->dateTimeBetween('-6 months'));

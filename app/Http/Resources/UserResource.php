@@ -17,8 +17,9 @@ class UserResource extends JsonResource
         return [
             'id' => $this->id,
             'email' => $this->email,
+            'name' => $this->name,
             'accounts' => AccountResource::collection($this->accounts),
-            'equity' => $this->equity,
+            'equity' => $this->equity->format(style: \NumberFormatter::CURRENCY),
         ];
     }
 }

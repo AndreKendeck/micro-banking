@@ -58,6 +58,14 @@ class Account extends Model
     ];
 
     /**
+     * @return Attribute
+     */
+    protected $dates = [
+        'created_at',
+        'updated_at'
+    ];
+
+    /**
      * Get the closing balance of the account
      *
      * @return Attribute
@@ -153,11 +161,19 @@ class Account extends Model
     }
 
     /**
+     * @param Carbon|null $period
      * @return \Illuminate\Database\Eloquent\Relations\HasMany
      */
-    public function transactions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    public function transactions(Carbon $period = null): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(Transaction::class)->orderBy('created_at', 'ASC');
+        $query = $this->hasMany(Transaction::class)->orderBy('created_at', 'ASC');
+        if ($period) {
+            $query->where([
+                ['created_at', '>=', $period->startOfMonth()->getTimestamp()],
+                ['created_at', '<=', $period->endOfMonth()->getTimestamp()]
+            ]);
+        }
+        return $query;
     }
 
     /**
@@ -180,8 +196,8 @@ class Account extends Model
             'type' => TransactionType::CREDIT->value,
             'amount' => $amount,
             'description' => $description,
-            'created_at' => $date ? $date : now(),
-            'updated_at' => $date ? $date : now()
+            'created_at' => $date ? $date->getTimestamp() : time(),
+            'updated_at' => $date ? $date->getTimestamp() : time()
         ]));
     }
 
@@ -202,8 +218,8 @@ class Account extends Model
                 'type' => TransactionType::DEBIT->value,
                 'amount' => $amount,
                 'description' => $description,
-                'created_at' => $date ? $date : now(),
-                'updated_at' => $date ? $date : now()
+                'created_at' => $date ? $date->getTimestamp() : time(),
+                'updated_at' => $date ? $date->getTimestamp() : time()
             ]));
         } catch (InsufficientFundsException $e) {
             Log::critical("Could not debit amount of {$amount->formatByCurrencySymbol()} on account due to Insufficient Funds.");
@@ -211,9 +227,9 @@ class Account extends Model
                 'type' => TransactionType::DEBIT->value,
                 'amount' => $amount,
                 "description" => "Failed to debit amount {$amount->formatByCurrencySymbol()} on Account due to  Insufficient Funds.",
-                'voided_at' => now(),
-                'created_at' => $date ? $date : now(),
-                'updated_at' => $date ? $date : now()
+                'voided_at' => now()->getTimestamp(),
+                'created_at' => $date ? $date->getTimestamp() : time(),
+                'updated_at' => $date ? $date->getTimestamp() : time()
             ]));
         }
     }
@@ -225,8 +241,29 @@ class Account extends Model
     public function getOpeningBalance(Carbon $date): Money
     {
         return money_sum(
-            ...$this->transactions()->where('created_at', '<=', $date)->get()->pluck('amount')
+            money(0),
+            ...$this->transactions()
+                ->where('created_at', '<=', $date->getTimestamp())
+                ->get()
+                ->pluck('amount')
         );
+    }
+
+    /**
+     * @param Carbon $period
+     * @return Collection
+     */
+    public function groupMonthlyTransactions(Carbon $period): Collection
+    {
+        return $this->transactions($period)->get()
+            ->groupBy(fn (Transaction $transaction) => $transaction->created_at->format('Y-m-d'))
+            ->map(fn (Collection $dailyTransactions) => [
+                'totalDebits' => $dailyTransactions->filter(fn (Transaction $transaction) => $transaction->isDebit())->count(),
+                'totalCredits' => $dailyTransactions->filter(fn (Transaction $transaction) => $transaction->isCredit())->count(),
+                'netMovement' => money_sum(money(0), ...$dailyTransactions->pluck('amount'))->format(style: \NumberFormatter::CURRENCY),
+                'openingBalance' => money_sum(money(0), ...$dailyTransactions->pluck('opening_balance'))->format(style: \NumberFormatter::CURRENCY),
+                'closingBalance' => money_sum(money(0), ...$dailyTransactions->pluck('running_balance'))->format(style: \NumberFormatter::CURRENCY),
+            ]);
     }
 
 

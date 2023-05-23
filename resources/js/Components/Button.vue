@@ -1,5 +1,5 @@
 <template>
-    <button :class="colorClass" :disabled="disabled" @click="$emit('click')">
+    <button :class="colorClass" class="w-full px-2 py-1 rounded" :disabled="disabled" @click="$emit('click')">
         <slot></slot>
     </button>
 </template>
@@ -16,9 +16,9 @@ export default {
             default: false,
         },
     },
-    methods: {
+    computed: {
         colorClass() {
-            switch (variant) {
+            switch (this.variant) {
                 case "default":
                     return "bg-blue-500 hover:bg-blue-600 text-white";
                 case "success":

@@ -1,5 +1,5 @@
 <template>
-    <div>
+    <div class="w-full">
         <label class="block font-medium mb-1">{{ label }}</label>
         <select
             v-model="selectedOption"
@@ -38,7 +38,7 @@ export default {
                 return this.value;
             },
             set(newValue) {
-                this.$emit("input", newValue);
+                this.$emit("changed", newValue);
             },
         },
     },

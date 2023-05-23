@@ -28,7 +28,8 @@ class AccountController extends Controller
     public function store(StoreAccountRequest $request): JsonResponse
     {
         return response()->json(
-            new AccountResource(Account::create(array_merge($request->validated(), ['user_id' => auth()->id()])))
+            new AccountResource(Account::create(array_merge($request->validated(), ['user_id' => auth()->id()]))),
+            201
         );
     }
 

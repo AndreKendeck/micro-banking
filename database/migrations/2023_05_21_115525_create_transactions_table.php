@@ -17,8 +17,9 @@ return new class extends Migration
             $table->unsignedBigInteger('amount');
             $table->text('description');
             $table->unsignedBigInteger('account_id');
-            $table->softDeletes('voided_at');
-            $table->timestamps();
+            $table->unsignedBigInteger('voided_at')->nullable();
+            $table->unsignedBigInteger('created_at');
+            $table->unsignedBigInteger('updated_at');
             $table->foreign('account_id')->references('id')->on('accounts');
         });
     }

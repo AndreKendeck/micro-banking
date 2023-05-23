@@ -58,3 +58,6 @@ if you want to seed a specific account with transaction using you can do so usin
 
 ## Development
 - [Naming Conventions / Standards ](https://xqsit.github.io/laravel-coding-guidelines/docs/naming-conventions/)
+
+## Pages
+
