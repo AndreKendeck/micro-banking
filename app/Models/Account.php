@@ -160,10 +160,11 @@ class Account extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * @param Carbon|null $period
-     * @return \Illuminate\Database\Eloquent\Relations\HasMany
-     */
+   /**
+    * @param Carbon|null $period
+    * @param boolean $audit
+    * @return \Illuminate\Database\Eloquent\Relations\HasMany
+    */
     public function transactions(Carbon $period = null): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         $query = $this->hasMany(Transaction::class)->orderBy('created_at', 'ASC');

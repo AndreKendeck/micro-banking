@@ -113,7 +113,7 @@ class Transaction extends Model
     protected function openingBalance(): Attribute
     {
         return new Attribute(
-            get: fn () => money_sum(new CMoney(0), ...$this->olderTransactions()->get()->order->pluck('amount'))
+            get: fn () => money_sum(new CMoney(0), ...$this->olderTransactions()->get()->pluck('amount'))
         );
     }
 

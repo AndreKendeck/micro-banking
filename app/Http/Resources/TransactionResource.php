@@ -17,11 +17,12 @@ class TransactionResource extends JsonResource
         return [
             'id' => $this->id,
             'type' => $this->type,
-            'amount' => $this->amount->formatByCurrencySymbol(),
+            'amount' => $this->amount->format(style: \NumberFormatter::CURRENCY),
             'description' => $this->description,
             'accountId' => $this->account_id,
-            'created_at' => $this->created_at->toDateTimeString(),
-            'running_balance' => $this->running_balance->formatByCurrencySymbol()
+            'createdAt' => $this->created_at->toDateTimeString(),
+            'openingBalance' => $this->opening_balance->format(style: \NumberFormatter::CURRENCY),
+            'runningBalance' => $this->running_balance->format(style: \NumberFormatter::CURRENCY),
         ];
     }
 }
