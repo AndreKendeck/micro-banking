@@ -61,3 +61,15 @@ if you want to seed a specific account with transaction using you can do so usin
 
 ## Pages
 
+### Home Page of all Accounts
+<img width="942" alt="image" src="https://github.com/AndreKendeck/micro-banking/assets/41024720/e546ad5b-e530-4daf-994f-07557c4f8259">
+
+### Accounts Page
+<img width="1135" alt="image" src="https://github.com/AndreKendeck/micro-banking/assets/41024720/f2d49627-c046-4a9a-98dc-4846fd1194c1">
+
+### Account Page
+<img width="1118" alt="image" src="https://github.com/AndreKendeck/micro-banking/assets/41024720/716bc635-9fee-4c25-86ec-58d03561f29a">
+
+<img width="1054" alt="image" src="https://github.com/AndreKendeck/micro-banking/assets/41024720/10463001-9747-4c5d-8c93-709d2295e8a5">
+
+
