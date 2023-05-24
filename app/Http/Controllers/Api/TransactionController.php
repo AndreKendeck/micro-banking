@@ -25,7 +25,8 @@ class TransactionController extends Controller
             year: request()->query('year', now()->year),
             month: request()->query('month', now()->month)
         );
-        if (request()->query('audit', false)) {
+        $audit = request()->query('audit') === 'true' ? true : false; 
+        if ($audit) {
             return response()->json(
                 TransactionResource::collection(
                     $account->transactions($date)->get()

@@ -10,7 +10,7 @@
                 <h4 class="text-lg">My Account</h4>
                 <div class="flex flex-row space-x-2 w-1/2 items-center">
                     <Select
-                        label="Transaction Display Type"
+                        label="Display"
                         :options="getTransactionTypes"
                         @changed="
                             (val) => {
@@ -48,7 +48,7 @@
                             {{ audit ? transaction.createdAt : dateKey }}
                         </td>
                         <td class="p-3 text-center font-bold text-gray-500">
-                            {{ audit ? transaction.type :  transaction.openingBalance }}
+                            {{ audit ? transaction.type : transaction.openingBalance }}
                         </td>
                         <td class="p-3 text-center font-bold text-gray-500">
                             {{ audit ? transaction.amount : transaction.totalDebits }}
